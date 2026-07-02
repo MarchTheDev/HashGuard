@@ -1,0 +1,132 @@
+name: Build Windows Release
+
+on:
+  push:
+    branches: ["main", "master"]
+    paths:
+      - "VERSION"
+      - ".github/workflows/build.yml"
+      - "hashguard.py"
+      - "installer.nsi"
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~\AppData\Local\pip\Cache
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Read version
+        shell: bash
+        run: |
+          RAW=$(cat VERSION | tr -d '\r\n')
+          echo "VERSION=${RAW#v}" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt pyinstaller pyinstaller-hooks-contrib
+
+      - name: Validate source before packaging
+        shell: bash
+        run: |
+          python -m py_compile hashguard.py
+
+      - name: Build Windows EXE
+        shell: bash
+        run: |
+          ICON_ARG=""
+          if [[ -f hashguard.ico ]]; then
+            ICON_ARG="--icon hashguard.ico"
+          fi
+          python -m PyInstaller \
+            --noconfirm --onefile --windowed \
+            --name "HashGuard" \
+            --collect-all tkinterdnd2 \
+            --collect-all customtkinter \
+            $ICON_ARG \
+            hashguard.py
+
+      - name: Build NSIS installer
+        shell: bash
+        run: |
+          choco install nsis --no-progress -y
+          powershell.exe -Command "& 'C:\Program Files (x86)\NSIS\makensis.exe' /DAPP_VERSION=${{ env.VERSION }} installer.nsi"
+
+      - name: Build Windows portable zip
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force -Path release-windows | Out-Null
+          Copy-Item dist\HashGuard.exe release-windows\HashGuard.exe -Force
+          Copy-Item README.md release-windows\README.md -Force
+          Compress-Archive -Path release-windows\* -DestinationPath "HashGuard-Portable-${{ env.VERSION }}.zip" -Force
+
+      - name: Upload Windows portable EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-portable-exe-${{ env.VERSION }}
+          path: dist/HashGuard.exe
+
+      - name: Upload Windows portable zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-portable-zip-${{ env.VERSION }}
+          path: HashGuard-Portable-${{ env.VERSION }}.zip
+
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer-${{ env.VERSION }}
+          path: HashGuard-Setup-*.exe
+
+  release:
+    name: Create Draft Release
+    needs: [build-windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Read version
+        shell: bash
+        run: |
+          RAW=$(cat VERSION | tr -d '\r\n')
+          echo "VERSION=${RAW#v}" >> $GITHUB_ENV
+
+      - name: Download Windows artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+
+      - name: List assets
+        run: find release-assets -type f | sort
+
+      - name: Create draft release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.VERSION }}
+          name: HashGuard v${{ env.VERSION }}
+          draft: true
+          overwrite_files: true
+          fail_on_unmatched_files: true
+          target_commitish: ${{ github.sha }}
+          files: release-assets/**/*
