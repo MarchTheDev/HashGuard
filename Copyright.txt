@@ -1,4 +1,4 @@
-    GhostHunterPro - GUI a software to remove leftrovers games files
+    HashGuard - A tool to create and verify hash of files
     Copyright (C) 2026  Marco Cornacchia Tanga
 
     This program is free software: you can redistribute it and/or modify
