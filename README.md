@@ -20,7 +20,7 @@ Verifying file integrity is critical for confirming that downloaded software, do
 
 ## License
 
-Distributed under the MIT License. See [LICENSE](https://github.com/MarchTheDev/HashGuard/blob/main/LICENSE) for more information.
+Distributed under the GPL 3.0 License. See [LICENSE](https://github.com/MarchTheDev/HashGuard/blob/main/LICENSE) for more information.
 
 ## Made by
 TheMarch88
