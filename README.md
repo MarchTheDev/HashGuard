@@ -14,6 +14,10 @@ Verifying file integrity is critical for confirming that downloaded software, do
 - Dynamic Theme Customization
 - 100% Offline & Private
 
+## Notes
+
+**The tool might get flagged by the antivirus, it is a false positive. Everything is safe and open source**
+
 ## License
 
 Distributed under the MIT License. See LICENSE for more information.
