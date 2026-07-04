@@ -9,6 +9,7 @@ on:
       - "hashguard.py"
       - "hashguard_app/**"
       - "installer.nsi"
+      - "icon.ico"
   workflow_dispatch:
 
 jobs:
@@ -55,8 +56,10 @@ jobs:
       - name: Build Windows EXE
         shell: bash
         run: |
+          ICON_FLAG=""
+          if [ -f icon.ico ]; then ICON_FLAG="--icon icon.ico"; fi
           python -m PyInstaller \
-            --noconfirm --onefile --windowed \
+            --noconfirm --onefile --windowed $ICON_FLAG \
             --name "HashGuard" \
             --collect-all webview \
             --collect-submodules hashguard_app \
@@ -76,6 +79,7 @@ jobs:
           New-Item -ItemType Directory -Force -Path release-windows | Out-Null
           Copy-Item dist\HashGuard.exe release-windows\HashGuard.exe -Force
           Copy-Item README.md release-windows\README.md -Force
+          if (Test-Path icon.ico) { Copy-Item icon.ico release-windows\icon.ico -Force }
           Compress-Archive -Path release-windows\* -DestinationPath "HashGuard-Portable-${{ env.VERSION }}.zip" -Force
 
       - name: Upload Windows portable EXE
