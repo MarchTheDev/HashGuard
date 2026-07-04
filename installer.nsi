@@ -18,9 +18,9 @@ RequestExecutionLevel admin
 
 !include "MUI2.nsh"
 
-!iffile "icon.ico"
-  !define MUI_ICON "icon.ico"
-  !define MUI_UNICON "icon.ico"
+!iffile "hashguard.ico"
+  !define MUI_ICON "hashguard.ico"
+  !define MUI_UNICON "hashguard.ico"
 !endif
 
 !define MUI_ABORTWARNING
@@ -45,14 +45,14 @@ Section "Install" SecInstall
   SetOutPath "$INSTDIR"
   File '/oname=${APP_EXE}' "dist\HashGuard.exe"
 
-  !iffile "icon.ico"
-    File "icon.ico"
+  !iffile "hashguard.ico"
+    File "hashguard.ico"
   !endif
 
   CreateDirectory "$SMPROGRAMS\${APP_NAME}"
-  !iffile "icon.ico"
-    CreateShortcut "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}" "" "$INSTDIR\icon.ico" 0
-    CreateShortcut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}" "" "$INSTDIR\icon.ico" 0
+  !iffile "hashguard.ico"
+    CreateShortcut "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}" "" "$INSTDIR\hashguard.ico" 0
+    CreateShortcut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}" "" "$INSTDIR\hashguard.ico" 0
   !else
     CreateShortcut "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}"
     CreateShortcut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}"
@@ -64,8 +64,8 @@ Section "Install" SecInstall
   WriteRegStr HKLM "${REGKEY}" "Publisher" "${PUBLISHER}"
   WriteRegStr HKLM "${REGKEY}" "InstallLocation" "$INSTDIR"
   WriteRegStr HKLM "${REGKEY}" "UninstallString" "$INSTDIR\Uninstall.exe"
-  !iffile "icon.ico"
-    WriteRegStr HKLM "${REGKEY}" "DisplayIcon" "$INSTDIR\icon.ico"
+  !iffile "hashguard.ico"
+    WriteRegStr HKLM "${REGKEY}" "DisplayIcon" "$INSTDIR\hashguard.ico"
   !else
     WriteRegStr HKLM "${REGKEY}" "DisplayIcon" "$INSTDIR\${APP_EXE}"
   !endif
@@ -78,7 +78,7 @@ SectionEnd
 Section "Uninstall"
   ExecWait 'taskkill /F /IM "${APP_EXE}"' $0
   Delete "$INSTDIR\${APP_EXE}"
-  Delete "$INSTDIR\icon.ico"
+  Delete "$INSTDIR\hashguard.ico"
   Delete "$INSTDIR\Uninstall.exe"
   Delete "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk"
   RMDir "$SMPROGRAMS\${APP_NAME}"

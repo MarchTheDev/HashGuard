@@ -15,9 +15,9 @@ else:
 # UI is inside the app package
 UI_PATH = BASE_DIR / "hashguard_app" / "UI" / "index.html"
 
-# Optional icon path (looks for icon.ico or icon.png in the project root)
+# Optional icon path (looks for hashguard.ico or icon.ico in the project root)
 ICON_PATH: Path | None = None
-for _candidate in ("icon.ico", "icon.png", "hashguard_app/icon.ico"):
+for _candidate in ("hashguard.ico", "icon.ico", "icon.png", "hashguard_app/hashguard.ico", "hashguard_app/icon.ico"):
     _p = BASE_DIR / _candidate
     if _p.exists():
         ICON_PATH = _p
