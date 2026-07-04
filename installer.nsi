@@ -8,7 +8,7 @@
 !define INSTDIR_REG   "Software\${PUBLISHER}\${APP_NAME}"
 
 !ifndef APP_VERSION
-  !define APP_VERSION "2.0.0"
+  !define APP_VERSION "1.0"
 !endif
 
 OutFile "HashGuard-Setup-${APP_VERSION}.exe"
