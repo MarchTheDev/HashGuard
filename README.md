@@ -1,26 +1,24 @@
 # HashGuard
 
-HashGuard is a fast, secure, standalone desktop application designed for computing and verifying cryptographic file checksums (MD5, SHA-1, SHA-256, SHA-512). Built with a responsive dark dashboard interface rendered inside a native desktop window powered by Python and pywebview, HashGuard combines the speed of native OS file hashing with modern interface design.
-Purpose & Overview
+<img width="1264" height="821" alt="HashGuard_rOUAUAq6zt" src="https://github.com/user-attachments/assets/46900e01-61b9-4565-8744-696423801054" />
 
-Verifying file integrity is critical for confirming that downloaded software, documents, or system images have not been corrupted during transfer or tampered with by third parties. Traditional command-line hashing tools can be cumbersome when processing multiple files or comparing long hexadecimal digests.
+## Description
 
-## Features
+HashGuard is a lightweight, security tool designed to ensure file integrity and detect data tampering. It allows you to calculate, export, and verify cryptographic checksums for individual files or entire directories simultaneously. 
 
-- Single File & Multi-File Modes
-- Auto-Regenerating Calculations
-- Multi-File Checksum Verification
-- Individual & Batch Report Exports
-- Dynamic Theme Customization
-- 100% Offline & Private
+By generating a hash of your files, you can later verify them to confirm that your data has not been modified, corrupted, or altered by unauthorized access.
 
-## Notes
+## Key Features
 
-**The tool might get flagged by the antivirus, it is a false positive. Everything is safe and open source**
+- **Multi-File Hashing**: Process multiple files or entire folders in a single process.
+- **Flexible Text Exports**: Save generated hashes directly to a standardized `.txt` file alongside their respective file paths, or simply copy them through the dedicated button.
+- **Integrity Verification**: Read an exported `.txt` hash list to automatically re-verify the current integrity of the listed files.
+- **Multi-Algorithm Support**: Computes checksums using standard cryptographic algorithms including MD5, SHA-1, SHA-256, and SHA-512. Look out in the future for more to be added.
 
 ## License
 
-Distributed under the GPL 3.0 License. See [LICENSE](https://github.com/MarchTheDev/HashGuard/blob/main/LICENSE) for more information.
+This project is licensed under the GNU GPLv3 License. See the [LICENSE](https://github.com/MarchTheDev/HashGuard/blob/main/LICENSE) file for details.
 
-## Made by
-TheMarch88
+## Author
+
+- MarchTheDev (TheMarch88)
