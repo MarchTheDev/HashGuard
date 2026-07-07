@@ -1,5 +1,5 @@
 ; HashGuard - NSIS Installer
-; Build with: makensis /DAPP_VERSION=1.0.1 installer.nsi
+; Build with: makensis /DAPP_VERSION=1.1 installer.nsi
 
 !define APP_NAME      "HashGuard"
 !define APP_EXE       "HashGuard.exe"
@@ -8,7 +8,7 @@
 !define INSTDIR_REG   "Software\${PUBLISHER}\${APP_NAME}"
 
 !ifndef APP_VERSION
-  !define APP_VERSION "1.0.1"
+  !define APP_VERSION "1.1"
 !endif
 
 OutFile "HashGuard-Setup-${APP_VERSION}.exe"
@@ -18,7 +18,7 @@ RequestExecutionLevel admin
 
 !include "MUI2.nsh"
 
-!iffile "hashguard.ico"
+!if /FileExists "hashguard.ico"
   !define MUI_ICON "hashguard.ico"
   !define MUI_UNICON "hashguard.ico"
 !endif
@@ -45,12 +45,12 @@ Section "Install" SecInstall
   SetOutPath "$INSTDIR"
   File '/oname=${APP_EXE}' "dist\HashGuard.exe"
 
-  !iffile "hashguard.ico"
+  !if /FileExists "hashguard.ico"
     File "hashguard.ico"
   !endif
 
   CreateDirectory "$SMPROGRAMS\${APP_NAME}"
-  !iffile "hashguard.ico"
+  !if /FileExists "hashguard.ico"
     CreateShortcut "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}" "" "$INSTDIR\hashguard.ico" 0
     CreateShortcut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}" "" "$INSTDIR\hashguard.ico" 0
   !else
@@ -64,7 +64,7 @@ Section "Install" SecInstall
   WriteRegStr HKLM "${REGKEY}" "Publisher" "${PUBLISHER}"
   WriteRegStr HKLM "${REGKEY}" "InstallLocation" "$INSTDIR"
   WriteRegStr HKLM "${REGKEY}" "UninstallString" "$INSTDIR\Uninstall.exe"
-  !iffile "hashguard.ico"
+  !if /FileExists "hashguard.ico"
     WriteRegStr HKLM "${REGKEY}" "DisplayIcon" "$INSTDIR\hashguard.ico"
   !else
     WriteRegStr HKLM "${REGKEY}" "DisplayIcon" "$INSTDIR\${APP_EXE}"

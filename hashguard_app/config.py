@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 APP_NAME    = "HashGuard"
-APP_VERSION = "1.0.1"
+APP_VERSION = "1.1"
 APP_TITLE   = f"{APP_NAME} — Offline Cryptographic Hub"
 
 if getattr(sys, "frozen", False):
