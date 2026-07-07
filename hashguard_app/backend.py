@@ -9,6 +9,7 @@ The JS front-end calls these for anything that needs native OS access:
   - hash computation (via hashlib, so it also works on large files
     without loading them entirely into the browser sandbox)
   - persisting settings / theme to disk
+  - downloading and installing updates from GitHub Releases
 """
 
 from __future__ import annotations
@@ -16,12 +17,19 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import platform
+import subprocess
+import sys
+import threading
+import urllib.request
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, Optional
 
 import webview  # type: ignore
 
-from hashguard_app.config import STATE_FILE
+from hashguard_app.config import (
+    STATE_FILE, UPDATE_CACHE_DIR, INSTALL_DIR, GITHUB_API_RELEASES, APP_VERSION,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -232,3 +240,192 @@ class Backend:
             return {"ok": True}
         except Exception as exc:
             return {"ok": False, "error": str(exc)}
+
+    # ------------------------------------------------------------------
+    # Auto-Update: check, download, install
+    # ------------------------------------------------------------------
+
+    def get_app_version(self) -> str:
+        """Return the current application version string."""
+        return APP_VERSION
+
+    def get_install_dir(self) -> str:
+        """Return the directory where the app is installed."""
+        return str(INSTALL_DIR)
+
+    def check_for_updates(self) -> dict[str, Any]:
+        """
+        Query the GitHub Releases API and return info about the latest release.
+
+        Returns ``{"ok": True, "update_available": bool, "latest_version": str,
+        "release_name": str, "download_url": str | None, "release_url": str,
+        "body": str, "published_at": str}``
+        """
+        try:
+            req = urllib.request.Request(
+                GITHUB_API_RELEASES,
+                headers={"Accept": "application/vnd.github+json", "User-Agent": "HashGuard-App"},
+            )
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+
+            if not isinstance(data, list) or len(data) == 0:
+                return {"ok": True, "update_available": False, "reason": "no_releases"}
+
+            latest = data[0]
+            tag = latest.get("tag_name", "")
+            latest_version = tag.lstrip("v")
+            current_clean = APP_VERSION.lstrip("v")
+
+            # Simple version comparison (works for semver-like strings)
+            def _ver_tuple(v: str):
+                parts = []
+                for p in v.split("."):
+                    try:
+                        parts.append(int(p))
+                    except ValueError:
+                        parts.append(0)
+                return tuple(parts)
+
+            update_available = _ver_tuple(latest_version) > _ver_tuple(current_clean)
+
+            # Find the Windows installer asset (.exe setup file)
+            download_url = None
+            for asset in latest.get("assets", []):
+                name = asset.get("name", "")
+                if name.endswith(".exe") and "setup" in name.lower():
+                    download_url = asset.get("browser_download_url")
+                    break
+            # Fallback: first .exe asset
+            if download_url is None:
+                for asset in latest.get("assets", []):
+                    name = asset.get("name", "")
+                    if name.endswith(".exe"):
+                        download_url = asset.get("browser_download_url")
+                        break
+
+            return {
+                "ok": True,
+                "update_available": update_available,
+                "latest_version": latest_version,
+                "tag_name": tag,
+                "release_name": latest.get("name", tag),
+                "download_url": download_url,
+                "release_url": latest.get("html_url", ""),
+                "body": latest.get("body", ""),
+                "published_at": latest.get("published_at", ""),
+            }
+        except Exception as exc:
+            return {"ok": False, "error": str(exc), "update_available": False}
+
+    def download_update(self, url: str) -> dict[str, Any]:
+        """
+        Download the update installer from *url* to the local cache.
+
+        Returns ``{"ok": True, "path": "..."}`` on success.
+        The download runs synchronously (called from a background thread in JS).
+        """
+        try:
+            # Determine filename from URL
+            filename = url.rsplit("/", 1)[-1] or "HashGuard-Setup.exe"
+            dest = UPDATE_CACHE_DIR / filename
+
+            # Download with progress reporting via a simple approach
+            req = urllib.request.Request(
+                url,
+                headers={"User-Agent": "HashGuard-App"},
+            )
+            with urllib.request.urlopen(req, timeout=120) as resp:
+                total = int(resp.headers.get("Content-Length", 0))
+                downloaded = 0
+                chunk_size = 65536
+                with open(dest, "wb") as fh:
+                    while True:
+                        chunk = resp.read(chunk_size)
+                        if not chunk:
+                            break
+                        fh.write(chunk)
+                        downloaded += len(chunk)
+
+            return {"ok": True, "path": str(dest), "size": downloaded}
+        except Exception as exc:
+            return {"ok": False, "error": str(exc)}
+
+    def launch_installer(self, installer_path: str) -> dict[str, Any]:
+        """
+        Launch the NSIS installer to perform an in-place upgrade.
+
+        Uses ``ShellExecuteW`` with the ``runas`` verb to properly request
+        admin elevation (UAC prompt). The installer is called with ``/S``
+        (silent) and ``/UPDATE`` flags.
+
+        Returns ``{"ok": True}`` if the installer was launched.
+        """
+        try:
+            installer = Path(installer_path)
+            if not installer.exists():
+                return {"ok": False, "error": f"Installer not found: {installer_path}"}
+
+            if platform.system() != "Windows":
+                return {"ok": False, "error": "In-app update is only supported on Windows."}
+
+            # Use ShellExecuteW with "runas" to trigger UAC elevation
+            # This is the proper way to launch an elevated process on Windows
+            try:
+                import ctypes.wintypes  # type: ignore
+
+                # ShellExecuteW signature
+                shell32 = ctypes.windll.shell32  # type: ignore
+                sw = shell32.ShellExecuteW
+                sw.argtypes = [
+                    ctypes.wintypes.HWND,  # hwnd
+                    ctypes.c_wchar_p,      # lpOperation
+                    ctypes.c_wchar_p,      # lpFile
+                    ctypes.c_wchar_p,      # lpParameters
+                    ctypes.c_wchar_p,      # lpDirectory
+                    ctypes.c_int,          # nShowCmd
+                ]
+                sw.restype = ctypes.wintypes.HINSTANCE
+
+                # "runas" verb triggers UAC elevation
+                result = sw(
+                    None,                    # parent window
+                    "runas",                 # request elevation
+                    str(installer),          # file to execute
+                    "/S /UPDATE",            # silent + upgrade flags
+                    str(installer.parent),   # working directory
+                    1,                       # SW_SHOWNORMAL
+                )
+
+                # ShellExecute returns a value > 32 on success
+                if result <= 32:
+                    return {"ok": False, "error": f"Failed to launch installer (error code {result}). You may need to run the app as Administrator."}
+
+                return {"ok": True}
+
+            except Exception as shell_err:
+                # Fallback: try subprocess with runas via PowerShell
+                try:
+                    import subprocess
+                    ps_cmd = f'Start-Process -FilePath "{installer}" -ArgumentList "/S","/UPDATE" -Verb RunAs'
+                    subprocess.Popen(
+                        ["powershell", "-Command", ps_cmd],
+                        close_fds=True,
+                        creationflags=subprocess.CREATE_NO_WINDOW,
+                    )
+                    return {"ok": True}
+                except Exception as fallback_err:
+                    return {"ok": False, "error": f"Elevation failed: {str(shell_err)}"}
+
+        except Exception as exc:
+            return {"ok": False, "error": str(exc)}
+
+    def download_and_install_update(self, url: str) -> dict[str, Any]:
+        """
+        Convenience: download the installer then immediately launch it.
+        The installer will terminate this app and replace it.
+        """
+        dl = self.download_update(url)
+        if not dl.get("ok"):
+            return dl
+        return self.launch_installer(dl["path"])
