@@ -24,10 +24,9 @@ RequestExecutionLevel admin
 !include "MUI2.nsh"
 !include "LogicLib.nsh"
 
-!iffile "hashguard.ico"
-  !define MUI_ICON "hashguard.ico"
-  !define MUI_UNICON "hashguard.ico"
-!endif
+; Icon setup - use /nonfatal so build continues if icon doesn't exist
+!define MUI_ICON "hashguard.ico"
+!define MUI_UNICON "hashguard.ico"
 
 !define MUI_ABORTWARNING
 
@@ -94,9 +93,8 @@ Section "Install" SecInstall
   SetOutPath "$INSTDIR"
   File '/oname=${APP_EXE}' "dist\HashGuard.exe"
 
-  !iffile "hashguard.ico"
-    File "hashguard.ico"
-  !endif
+  ; Icon - use /nonfatal so build continues if not present
+  File /nonfatal "hashguard.ico"
 
   ; -----------------------------------------------------------
   ; Shortcuts — only create on fresh install, or if /UPDATE
@@ -105,19 +103,19 @@ Section "Install" SecInstall
   CreateDirectory "$SMPROGRAMS\${APP_NAME}"
 
   ; Start Menu shortcut (always refresh)
-  !iffile "hashguard.ico"
+  ${If} ${FileExists} "$INSTDIR\hashguard.ico"
     CreateShortcut "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}" "" "$INSTDIR\hashguard.ico" 0
-  !else
+  ${Else}
     CreateShortcut "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}"
-  !endif
+  ${EndIf}
 
   ; Desktop shortcut — create only on fresh install
   ${If} $IsUpgrade == "0"
-    !iffile "hashguard.ico"
+    ${If} ${FileExists} "$INSTDIR\hashguard.ico"
       CreateShortcut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}" "" "$INSTDIR\hashguard.ico" 0
-    !else
+    ${Else}
       CreateShortcut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}"
-    !endif
+    ${EndIf}
   ${EndIf}
 
   ; -----------------------------------------------------------
@@ -129,11 +127,13 @@ Section "Install" SecInstall
   WriteRegStr HKLM "${REGKEY}" "Publisher" "${PUBLISHER}"
   WriteRegStr HKLM "${REGKEY}" "InstallLocation" "$INSTDIR"
   WriteRegStr HKLM "${REGKEY}" "UninstallString" "$INSTDIR\Uninstall.exe"
-  !iffile "hashguard.ico"
+  
+  ${If} ${FileExists} "$INSTDIR\hashguard.ico"
     WriteRegStr HKLM "${REGKEY}" "DisplayIcon" "$INSTDIR\hashguard.ico"
-  !else
+  ${Else}
     WriteRegStr HKLM "${REGKEY}" "DisplayIcon" "$INSTDIR\${APP_EXE}"
-  !endif
+  ${EndIf}
+  
   WriteRegDWORD HKLM "${REGKEY}" "NoModify" 1
   WriteRegDWORD HKLM "${REGKEY}" "NoRepair" 1
 
