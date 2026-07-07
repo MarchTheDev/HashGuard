@@ -47,17 +47,6 @@ Function .onInit
     ; Use the previous install directory for the upgrade
     StrCpy $INSTDIR $PrevInstallDir
   ${EndIf}
-
-  ; If /UPDATE flag was passed (in-app auto-update), force silent + use existing dir
-  ${If} $IsUpgrade == "1"
-    ; Check for /UPDATE command-line flag
-    StrCpy $0 ""
-    ${GetParameters} $0
-    ${StrContains} $1 "/UPDATE" $0
-    ${If} $1 != ""
-      ; Already in upgrade path — silent is handled by /S
-    ${EndIf}
-  ${EndIf}
 FunctionEnd
 
 ; ---------------------------------------------------------------------------
