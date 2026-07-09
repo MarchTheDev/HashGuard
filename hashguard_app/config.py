@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 
 APP_NAME    = "HashGuard"
-APP_VERSION = "1.1"
+APP_VERSION = "1.2"
 APP_TITLE   = f"{APP_NAME} — Offline Cryptographic Hub"
 
 # GitHub repository for update checks
@@ -15,7 +15,6 @@ GITHUB_RELEASES_PAGE = f"https://github.com/{GITHUB_REPO}/releases"
 
 if getattr(sys, "frozen", False):
     BASE_DIR = Path(sys._MEIPASS)
-    # When running as a frozen exe, the actual install directory is the parent
     INSTALL_DIR = Path(os.path.dirname(sys.executable))
 else:
     BASE_DIR = Path(__file__).resolve().parent.parent
