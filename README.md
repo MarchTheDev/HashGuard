@@ -22,3 +22,7 @@ This project is licensed under the GNU GPLv3 License. See the [LICENSE](https://
 ## Author
 
 - MarchTheDev (TheMarch88)
+
+## NEWS
+
+HashGuard has been added to FMHY, thank you so much for it!
