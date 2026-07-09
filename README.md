@@ -25,4 +25,4 @@ This project is licensed under the GNU GPLv3 License. See the [LICENSE](https://
 
 ## NEWS
 
-HashGuard has been added to FMHY, thank you so much for it!
+There could be some problems with caching and MD4, i'm fixing them 
