@@ -1,6 +1,6 @@
 # HashGuard
 
-<img width="1264" height="821" alt="HashGuard_rOUAUAq6zt" src="https://github.com/user-attachments/assets/46900e01-61b9-4565-8744-696423801054" />
+<img width="1264" height="821" alt="HashGuard_aHE5EefFme" src="https://github.com/user-attachments/assets/bb3daf09-2033-49df-b4e1-c2008034f855" />
 
 ## Description
 
