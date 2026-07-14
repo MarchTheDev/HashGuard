@@ -24,5 +24,3 @@ This project is licensed under the GNU GPLv3 License. See the [LICENSE](https://
 - MarchTheDev (TheMarch88)
 
 ## NEWS
-
-There could be some problems with caching and MD4, i'm fixing them 
