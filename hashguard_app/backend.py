@@ -30,7 +30,7 @@ except ImportError:
     HAS_BLAKE3 = False
 
 # Import config
-from hashguard_app.config import DATA_DIR, STATE_FILE
+from hashguard_app.config import DATA_DIR, STATE_FILE, UPDATE_CACHE_DIR
 
 # Setup logging
 LOG_FILE = DATA_DIR / "backend.log"
@@ -206,6 +206,72 @@ class Backend:
             log(f"  ERROR writing file: {e}")
 
             return {"ok": False, "error": str(e)}
+    
+    # ========== UPDATE MANAGEMENT ==========
+    
+    def download_update(self, url: str) -> dict:
+        """Download update installer from URL"""
+        log(f"download_update() called with URL: {url}")
+        try:
+            import urllib.request
+            from pathlib import Path as PathLib
+            
+            # Create filename from URL
+            filename = PathLib(url).name or "HashGuard-Setup.exe"
+            target_path = UPDATE_CACHE_DIR / filename
+            
+            log(f"  Downloading to: {target_path}")
+            
+            # Download the file
+            request = urllib.request.Request(
+                url,
+                headers={"User-Agent": "HashGuard"}
+            )
+            
+            with urllib.request.urlopen(request, timeout=120) as response:
+                target_path.write_bytes(response.read())
+            
+            log(f"  Download complete, size: {target_path.stat().st_size} bytes")
+            return {"ok": True, "path": str(target_path)}
+            
+        except Exception as e:
+            log(f"  ERROR downloading update: {e}")
+            import traceback
+            log(f"  Traceback: {traceback.format_exc()}")
+            return {"ok": False, "error": str(e)}
+    
+    def launch_installer(self, path: str) -> dict:
+        """Launch the downloaded installer"""
+        log(f"launch_installer() called with path: {path}")
+        try:
+            from pathlib import Path as PathLib
+            
+            target = PathLib(path)
+            
+            if not target.exists():
+                log(f"  ERROR: Installer file not found at {path}")
+                return {"ok": False, "error": "Installer file not found"}
+            
+            log(f"  Launching installer: {target}")
+            
+            # Launch the installer
+            if os.name == "nt":
+                # Windows
+                os.startfile(str(target))
+            else:
+                # Linux/Mac (for testing)
+                import subprocess
+                subprocess.Popen([str(target)])
+            
+            log(f"  Installer launched successfully")
+            return {"ok": True}
+            
+        except Exception as e:
+            log(f"  ERROR launching installer: {e}")
+            import traceback
+            log(f"  Traceback: {traceback.format_exc()}")
+            return {"ok": False, "error": str(e)}
+
 
 
 
