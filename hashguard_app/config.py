@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 
 APP_NAME    = "HashGuard"
-APP_VERSION = "1.2"
+APP_VERSION = "1.2.1"
 APP_TITLE   = f"{APP_NAME} — Offline Cryptographic Hub"
 
 # GitHub repository for update checks
@@ -13,6 +13,8 @@ GITHUB_REPO = "MarchTheDev/HashGuard"
 GITHUB_API_RELEASES = f"https://api.github.com/repos/{GITHUB_REPO}/releases"
 GITHUB_RELEASES_PAGE = f"https://github.com/{GITHUB_REPO}/releases"
 
+# Where bundled assets live (UI, icon, etc.)
+# When frozen with PyInstaller one-file, assets are in a temp folder
 if getattr(sys, "frozen", False):
     BASE_DIR = Path(sys._MEIPASS)
     INSTALL_DIR = Path(os.path.dirname(sys.executable))
@@ -31,11 +33,28 @@ for _candidate in ("hashguard.ico", "icon.ico", "icon.png", "hashguard_app/hashg
         ICON_PATH = _p
         break
 
-DATA_DIR = BASE_DIR / ".hashguard_data"
-DATA_DIR.mkdir(parents=True, exist_ok=True)
+# ---------------------------------------------------------------------------
+# PERSISTENT DATA DIRECTORY (Windows only)
+# ---------------------------------------------------------------------------
+# State is saved to %APPDATA%\HashGuard\state.json
+# This persists across app restarts and updates
+# ---------------------------------------------------------------------------
+def _get_data_dir() -> Path:
+    # Use APPDATA on Windows, fallback to home directory for testing
+    if sys.platform == "win32":
+        base = Path(os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming"))
+    else:
+        # For testing on other platforms
+        base = Path.home()
+    
+    data = base / APP_NAME
+    data.mkdir(parents=True, exist_ok=True)
+    return data
+
+DATA_DIR = _get_data_dir()
 STATE_FILE = DATA_DIR / "state.json"
 
-# Temporary download location for updates
+# Temporary download location for updates (inside persistent data dir)
 UPDATE_CACHE_DIR = DATA_DIR / "updates"
 UPDATE_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 

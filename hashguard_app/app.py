@@ -37,4 +37,4 @@ def main() -> None:
     )
 
     icon_arg = str(ICON_PATH) if ICON_PATH and ICON_PATH.exists() else None
-    webview.start(icon=icon_arg, debug=False)
+    webview.start(icon=icon_arg, debug=False, private_mode=False)
